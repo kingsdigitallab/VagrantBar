@@ -34,7 +34,10 @@ class VagrantBar(rumps.App):
 
         self.vagrant = Vagrant()
 
+        self.menu = []
         self.build_menu()
+        self.menu.add('')
+
 
         # Here we update the menu in the background:
         sched = BackgroundScheduler()
@@ -42,37 +45,53 @@ class VagrantBar(rumps.App):
         def scheduled_updater():
             self.update_menu()
 
-        sched.add_job(scheduled_updater, 'interval', seconds=15)
+        sched.add_job(scheduled_updater, 'interval', seconds=5)
         sched.start()
 
-    def add_quit_button(self):
-        self.menu.add(rumps.MenuItem('Quit', rumps.quit_application))
 
     def build_menu(self):
-        self.menu.clear()
-
         for name,vm in self.vagrant.get_vms():
-            submenu = rumps.MenuItem(name)
-            if vm.state == Vagrant.STATE_POWERON:
-                submenu.state = 1 
-                
-            if vm.state == Vagrant.STATE_POWERON:
-                submenu.add(self.create_menu_item("Power Off", vm, cb_vm_power_off))
-                submenu.add(self.create_menu_item("Reset", vm, cb_vm_reset))
-                submenu.add(self.create_menu_item("Reprovision", vm, cb_vm_provision))
-                submenu.add('')
-                submenu.add(self.create_menu_item("Open SSH Console", vm, cb_vm_ssh))
-                submenu.add(self.create_menu_item("Open in Browser", vm, cb_vm_web))
+            if name not in self.menu:
+                submenu = rumps.MenuItem(name)
+                    
+                if vm.state == Vagrant.STATE_POWERON:
+                    submenu.state = 1 
+                    submenu.add(self.create_menu_item("Power Off", vm, cb_vm_power_off))
+                    submenu.add(self.create_menu_item("Reset", vm, cb_vm_reset))
+                    submenu.add(self.create_menu_item("Reprovision", vm, cb_vm_provision))
+                    submenu.add('')
+                    submenu.add(self.create_menu_item("Open SSH Console", vm, cb_vm_ssh))
+                    submenu.add(self.create_menu_item("Open in Browser", vm, cb_vm_web))
+                else:
+                    submenu.state = 0
+                    submenu.add(self.create_menu_item("Power On", vm, cb_vm_power_on))
+                    submenu.add('')
+                    submenu.add(self.create_menu_item("Destroy", vm, cb_vm_destroy))
+
+                self.menu.add(submenu)
+
+
             else:
-                submenu.add(self.create_menu_item("Power On", vm, cb_vm_power_on))
-                submenu.add('')
-                submenu.add(self.create_menu_item("Destroy", vm, cb_vm_destroy))
+                item = self.menu[name]
+                if item.state == 0 and vm.state == Vagrant.STATE_POWERON or item.state == 1 and vm.state == Vagrant.STATE_POWEROFF:
+                    # Update here!
+                    print("Updating")
+                    item.clear()
+                    if vm.state == Vagrant.STATE_POWERON:
+                        item.state = 1
+                        item.add(self.create_menu_item("Power Off", vm, cb_vm_power_off))
+                        item.add(self.create_menu_item("Reset", vm, cb_vm_reset))
+                        item.add(self.create_menu_item("Reprovision", vm, cb_vm_provision))
+                        item.add('')
+                        item.add(self.create_menu_item("Open SSH Console", vm, cb_vm_ssh))
+                        item.add(self.create_menu_item("Open in Browser", vm, cb_vm_web))
+                    else:
+                        item.state = 0
+                        item.add(self.create_menu_item("Power On", vm, cb_vm_power_on))
+                        item.add('')
+                        item.add(self.create_menu_item("Destroy", vm, cb_vm_destroy))
 
-
-
-            self.menu.add(submenu)
-
-        self.menu.add('')
+                
 
     def update_menu(self):
         self.vagrant.update_vms()
@@ -85,5 +104,5 @@ class VagrantBar(rumps.App):
         return item
 
 if __name__ == "__main__":
-    VagrantBar().run(quit_button=None)
+    VagrantBar().run()
 
