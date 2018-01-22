@@ -30,7 +30,7 @@ class VagrantBar(rumps.App):
     vagrant = None # Store our vagrant instance
 
     def __init__(self):
-        super(VagrantBar, self).__init__(name="VB")
+        super(VagrantBar, self).__init__(name="VB", icon="assets/icon.png")
 
         self.vagrant = Vagrant()
 
@@ -96,7 +96,6 @@ class VagrantBar(rumps.App):
     def update_menu(self):
         self.vagrant.update_vms()
         self.build_menu()
-        self.add_quit_button()
 
     def create_menu_item(self, title, vm, callback):
         item = rumps.MenuItem(title, callback=callback)
