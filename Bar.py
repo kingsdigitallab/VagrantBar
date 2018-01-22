@@ -75,7 +75,6 @@ class VagrantBar(rumps.App):
                 item = self.menu[name]
                 if item.state == 0 and vm.state == Vagrant.STATE_POWERON or item.state == 1 and vm.state == Vagrant.STATE_POWEROFF:
                     # Update here!
-                    print("Updating")
                     item.clear()
                     if vm.state == Vagrant.STATE_POWERON:
                         item.state = 1
